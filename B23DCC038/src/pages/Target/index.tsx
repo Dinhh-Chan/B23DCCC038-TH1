@@ -1,58 +1,70 @@
 import React, { useState, useEffect } from "react";
-import { Card, InputNumber, Button, Select, Progress, message } from "antd";
+import { Card, InputNumber, Button, Select, Progress, message, Modal } from "antd";
 import { Option } from "antd/es/mentions";
 
 interface Subject {
   name: string;
-  target: number;
-  completed: number;
+  target: number;  // Mục tiêu học tập (phút)
+  completed: number;  // Tiến độ đã học (phút)
 }
 
 const Target: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // "YYYY-MM"
   const [selectedSubject, setSelectedSubject] = useState<string>(""); 
   const [subjects, setSubjects] = useState<Subject[]>([]); 
+  const [subjects2, setSubjects2] = useState<Subject[]>([]); 
   const [targetMinutes, setTargetMinutes] = useState<number>(0);
-  const [progress, setProgress] = useState<number>(0);
+  const [completedHours, setCompletedHours] = useState<number>(0); 
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false); // Quản lý trạng thái của Modal
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState<boolean>(false); // Modal chi tiết môn học
+  const [currentSubject, setCurrentSubject] = useState<Subject | null>(null); // Lưu môn học hiện tại khi xem chi tiết
 
   // Load danh sách môn học từ localStorage khi component mount
   useEffect(() => {
     const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
-    setSubjects(storedSubjects);
+    setSubjects(Array.isArray(storedSubjects) ? storedSubjects : []);
   }, []);
 
-  // Chọn môn học và tải mục tiêu học tập
+  useEffect(() => {
+    const storedSubjects = JSON.parse(localStorage.getItem("subjects2") || "[]");
+    setSubjects2(Array.isArray(storedSubjects) ? storedSubjects : []);
+  }, []);
+
   useEffect(() => {
     if (selectedSubject) {
       const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
       const subject = storedSubjects.find((sub: Subject) => sub.name === selectedSubject);
       if (subject) {
         setTargetMinutes(subject.target);
-        setProgress(subject.completed);
+        setCompletedHours(Math.floor(subject.completed / 60));
       }
     }
   }, [selectedSubject]);
 
-  // Lưu mục tiêu học tập vào localStorage
   const handleSetGoal = () => {
     if (targetMinutes <= 0) {
       message.warning("Mục tiêu phải lớn hơn 0 phút!");
       return;
     }
 
-    const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
-    const updatedSubjects = storedSubjects.map((subject: Subject) => {
-      if (subject.name === selectedSubject) {
-        return { ...subject, target: targetMinutes };
-      }
-      return subject;
-    });
-    localStorage.setItem("subjects", JSON.stringify(updatedSubjects));
+    const storedSubjects = JSON.parse(localStorage.getItem("subjects2") || "[]");
+    const existingSubject = storedSubjects.find((subject: Subject) => subject.name === selectedSubject);
+
+    if (existingSubject) {
+      message.warning("Môn học này đã có mục tiêu!");
+      return;
+    }
+
+    const newSubject = { name: selectedSubject, target: targetMinutes, completed: completedHours * 60 };
+    const updatedSubjects = [...storedSubjects, newSubject];
+    localStorage.setItem("subjects2", JSON.stringify(updatedSubjects));
+
+    setSubjects2(updatedSubjects);
     message.success(`Đã đặt mục tiêu ${targetMinutes} phút cho môn học ${selectedSubject}`);
+    setIsModalVisible(false);
   };
 
-  // Cập nhật tiến độ học tập
-  const handleUpdateProgress = (minutes: number) => {
+  const handleUpdateProgress = (subjectName: string, minutes: number) => {
     if (minutes <= 0) {
       message.warning("Số phút học phải lớn hơn 0!");
       return;
@@ -60,7 +72,7 @@ const Target: React.FC = () => {
 
     const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
     const updatedSubjects = storedSubjects.map((subject: Subject) => {
-      if (subject.name === selectedSubject) {
+      if (subject.name === subjectName) {
         const newCompleted = subject.completed + minutes;
         return { ...subject, completed: newCompleted };
       }
@@ -68,54 +80,105 @@ const Target: React.FC = () => {
     });
 
     localStorage.setItem("subjects", JSON.stringify(updatedSubjects));
-    setProgress(progress + minutes);
-    message.success(`Đã cộng thêm ${minutes} phút vào tiến độ học tập cho môn ${selectedSubject}!`);
+    setSubjects(updatedSubjects);
   };
 
-  // Chọn tháng và lưu lại
-  const handleChangeMonth = (month: string) => {
-    setSelectedMonth(month);
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setIsDetailModalVisible(false);
+  };
+
+  const handleDeleteSubject = (subjectName: string) => {
+    const storedSubjects = JSON.parse(localStorage.getItem("subjects2") || "[]");
+    const updatedSubjects = storedSubjects.filter((subject: Subject) => subject.name !== subjectName);
+    localStorage.setItem("subjects2", JSON.stringify(updatedSubjects));
+    setSubjects2(updatedSubjects);
+    message.success(`Đã xóa môn học ${subjectName}`);
+  };
+
+  const handleEditSubject = (subject: Subject) => {
+    setSelectedSubject(subject.name);
+    setTargetMinutes(subject.target);
+    setCompletedHours(Math.floor(subject.completed / 60));
+    setIsModalVisible(true);
+  };
+
+  const handleViewDetail = (subject: Subject) => {
+    setCurrentSubject(subject);
+    setIsDetailModalVisible(true);
+  };
+
+  const convertMinutesToHours = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours} giờ ${remainingMinutes} phút`;
   };
 
   return (
     <div>
-      <Card title="🎯 Quản lý Mục tiêu Học tập">
-        <div style={{ marginBottom: 16 }}>
-          <p><strong>Chọn tháng:</strong></p>
-          <Select
-            defaultValue={selectedMonth}
-            onChange={handleChangeMonth}
-            style={{ width: "100%" }}
-          >
-            <Option value="2025-01">Tháng 1, 2025</Option>
-            <Option value="2025-02">Tháng 2, 2025</Option>
-            {/* Add more months */}
-          </Select>
-        </div>
+      <Button type="primary" onClick={showModal}>
+        Tạo kế hoạch học tập
+      </Button>
 
-        <div style={{ marginBottom: 16 }}>
+      <Modal
+        title="Tạo Kế Hoạch Học Tập"
+        visible={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        width={500}
+      >
+        <Card title="🎯 Quản lý Mục tiêu Học tập">
+          <div style={{ marginBottom: 16 }}>
+            <p><strong>Chọn tháng:</strong></p>
+            <Select
+              defaultValue={selectedMonth}
+              onChange={(month) => setSelectedMonth(month)}
+              style={{ width: "100%" }}
+            >
+              <Option value="2025-01">Tháng 1, 2025</Option>
+              <Option value="2025-02">Tháng 2, 2025</Option>
+            </Select>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
             <p><strong>Chọn môn học:</strong></p>
             <Select
-                value={selectedSubject}
-                onChange={setSelectedSubject}
-                style={{ width: "100%" }}
-                >
-                {subjects.map((subject) => (
-                    <Select.Option key={subject.name} value={subject.name}>
-                    {subject.name}
-                    </Select.Option>
-                ))}
+              value={selectedSubject}
+              onChange={(value) => setSelectedSubject(value)}
+              style={{ width: "100%" }}
+            >
+              {subjects.map((subject) => (
+                <Option key={subject.name} value={subject.name}>
+                  {subject.name}
+                </Option>
+              ))}
             </Select>
-        </div>
+          </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <p><strong>Nhập mục tiêu học tập (phút):</strong></p>
-          <InputNumber
-            min={1}
-            value={targetMinutes}
-            onChange={(value) => setTargetMinutes(value || 0)}
-            style={{ width: "100%" }}
-          />
+          <div style={{ marginBottom: 16 }}>
+            <p><strong>Nhập mục tiêu học tập (phút):</strong></p>
+            <InputNumber
+              min={1}
+              value={targetMinutes}
+              onChange={(value) => setTargetMinutes(value || 0)} // Sửa lại cho phù hợp
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <p><strong>Nhập số giờ đã học:</strong></p>
+            <InputNumber
+              min={0}
+              value={completedHours}
+              onChange={(value) => setCompletedHours(value || 0)} // Sửa lại cho phù hợp
+              style={{ width: "100%" }}
+            />
+          </div>
+
           <Button
             type="primary"
             onClick={handleSetGoal}
@@ -123,28 +186,50 @@ const Target: React.FC = () => {
           >
             Lưu mục tiêu
           </Button>
-        </div>
+        </Card>
+      </Modal>
 
-        <div style={{ marginBottom: 16 }}>
-          <p><strong>Nhập số phút đã học:</strong></p>
-          <InputNumber
-            min={1}
-            onChange={(value) => handleUpdateProgress(value || 0)}
-            style={{ width: "100%" }}
-          />
-        </div>
-
-        <p><strong>Tiến độ học tập:</strong></p>
-        <Progress percent={(progress / targetMinutes) * 100} status={progress >= targetMinutes ? "success" : "active"} />
-
-        {progress >= targetMinutes ? (
-          <p style={{ color: "green", fontWeight: "bold" }}>🎉 Chúc mừng! Bạn đã hoàn thành mục tiêu!</p>
-        ) : (
-          <p>📊 Bạn đã học {progress}/{targetMinutes} phút.</p>
+      <Modal
+        title="Chi Tiết Môn Học"
+        visible={isDetailModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        {currentSubject && (
+          <Card title={`Chi Tiết Môn Học: ${currentSubject.name}`}>
+            <p><strong>Mục tiêu học tập:</strong> {currentSubject.target} phút</p>
+            <p><strong>Tiến độ học:</strong> {currentSubject.completed} phút ({convertMinutesToHours(currentSubject.completed)} đã học)</p>
+          </Card>
         )}
-      </Card>
+      </Modal>
+
+      <div>
+        <h3>Môn học hiện tại:</h3>
+        {subjects2.length === 0 ? (
+          <p>Chưa có môn học nào.</p>
+        ) : (
+          <ul>
+            {subjects2.map((subject) => (
+              <li key={subject.name}>
+                <strong>{subject.name}</strong> - Mục tiêu: {subject.target} phút
+                <br />
+                Tiến độ: {subject.completed} phút ({convertMinutesToHours(subject.completed)} đã học)
+                <Progress percent={(subject.completed / subject.target) * 100} status={subject.completed >= subject.target ? "success" : "active"} />
+                <Button onClick={() => handleViewDetail(subject)} style={{ marginLeft: 8 }}>
+                  Xem Chi Tiết
+                </Button>
+                <Button onClick={() => handleEditSubject(subject)} style={{ marginLeft: 8 }}>
+                  Sửa
+                </Button>
+                <Button onClick={() => handleDeleteSubject(subject.name)} style={{ marginLeft: 8 }} danger>
+                  Xóa
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };
-
 export default Target;
