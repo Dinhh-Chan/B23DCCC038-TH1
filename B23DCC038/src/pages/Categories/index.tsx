@@ -2,27 +2,19 @@
 
 import React, { useState } from 'react';
 import SubjectManager from '../../components/SubjectManager';
-import SubjectDetails from '../../components/SubjectDetails';
+import CalendarView from '../../components/CalendarView';
 import { Subject } from '../../models/subject';
+import { getSubjects } from '../../utils/localStorageUtils';
 
 const App: React.FC = () => {
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-
-  const handleSelectSubject = (subject: Subject) => {
-    setSelectedSubject(subject);
-  };
-
-  const handleCloseDetails = () => {
-    setSelectedSubject(null);
-  };
+  const [subjects, setSubjects] = useState<Subject[]>(Object.values(getSubjects()));
 
   return (
     <div>
-      <h1>Quản lý danh mục học tập</h1>
+      <h1>Quản lý tiến độ học tập</h1>
       <SubjectManager />
-      {selectedSubject && (
-        <SubjectDetails subject={selectedSubject} onClose={handleCloseDetails} />
-      )}
+      <h2>Lịch học</h2>
+      <CalendarView subjects={subjects} />
     </div>
   );
 };

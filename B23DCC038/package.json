@@ -54,6 +54,12 @@
   "dependencies": {
     "@ant-design/icons": "~4.5.0",
     "@ant-design/pro-layout": "~6.15.3",
+    "@fullcalendar/core": "^6.1.15",
+    "@fullcalendar/daygrid": "^6.1.15",
+    "@fullcalendar/interaction": "^6.1.15",
+    "@fullcalendar/list": "^6.1.15",
+    "@fullcalendar/react": "^6.1.15",
+    "@fullcalendar/timegrid": "^6.1.15",
     "@monaco-editor/react": "^4.6.0",
     "@sentry/react": "^7.65.0",
     "@tinymce/tinymce-react": "^4.2.0",
