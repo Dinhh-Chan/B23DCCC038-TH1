@@ -45,6 +45,12 @@ export default [
 		icon: 'UnorderedListOutlined',
 	},
 	{
+		path: '/minigame',
+		name: 'Minigame',
+		component: './SoRandom/index',
+		icon: 'CalculatorOutlined',
+	},
+	{
 		path: '/quan-ly',
 		name: 'Management',
 		icon: 'UnorderedListOutlined',
