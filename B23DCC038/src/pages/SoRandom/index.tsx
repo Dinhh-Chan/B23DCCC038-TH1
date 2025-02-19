@@ -70,7 +70,7 @@ const GuessingGame: React.FC = () => {
       result = 'Bạn đoán quá cao!';
       setFeedback(result);
     } else {
-      result = 'Chúc mừng! Bạn đã đoán đúng!';
+      result = `Chúc mừng! Bạn đã đoán đúng! Số đúng là ${randomNumber}.`;
       setFeedback(result);
       setGameWon(true);
       setGameOver(true);
@@ -99,7 +99,7 @@ const GuessingGame: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '70%', margin: '0 auto' }}>
       <Card 
         title={<Title level={2} style={{ textAlign: 'center' }}>Trò Chơi Đoán Số</Title>}
         style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
