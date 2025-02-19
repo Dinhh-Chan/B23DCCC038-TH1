@@ -18,7 +18,7 @@ const App: React.FC = () => {
 
   return (
     <div>
-      <h1>Quản lý tiến độ học tập</h1>
+      <h1>Quản lý danh mục học tập</h1>
       <SubjectManager />
       {selectedSubject && (
         <SubjectDetails subject={selectedSubject} onClose={handleCloseDetails} />
