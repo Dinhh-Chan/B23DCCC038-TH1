@@ -7,14 +7,17 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import { Subject } from '../models/subject';
 import moment from 'moment';
 
-// Hàm tạo màu ngẫu nhiên
-const getRandomColor = () => {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+// Định nghĩa màu cố định cho mỗi môn học (hoặc ánh xạ theo tên môn học)
+const getSubjectColor = (subjectName: string) => {
+  const colors: { [key: string]: string } = {
+    'Toán': '#ff5733',
+    'Văn': '#33ff57',
+    'Anh': '#3357ff',
+    'Khoa học': '#ff33a1',
+    'Công nghệ': '#a1ff33',
+  };
+
+  return colors[subjectName] || '#cccccc'; // Màu mặc định nếu không có trong bảng
 };
 
 interface CalendarViewProps {
@@ -22,14 +25,14 @@ interface CalendarViewProps {
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ subjects }) => {
-  // Tạo danh sách sự kiện với màu sắc và tên môn học
+  // Tạo danh sách sự kiện với màu sắc cố định và tên môn học
   const events = subjects.flatMap(subject => {
     if (Array.isArray(subject.studyTime)) {
       return subject.studyTime.map((time: string) => ({
         title: subject.name, // Tên môn học hiển thị trên lịch
         date: moment(time).format('YYYY-MM-DD'),
-        backgroundColor: getRandomColor(), // Tạo màu ngẫu nhiên cho mỗi môn học
-        borderColor: getRandomColor(), // Tạo màu viền ngẫu nhiên cho sự kiện
+        backgroundColor: getSubjectColor(subject.name), // Gán màu cố định cho môn học
+        borderColor: getSubjectColor(subject.name), // Gán màu viền
       }));
     } else {
       return []; // Nếu studyTime không phải mảng, trả về mảng rỗng

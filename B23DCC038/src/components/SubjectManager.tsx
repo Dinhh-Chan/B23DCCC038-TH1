@@ -1,3 +1,5 @@
+// src/components/SubjectManager.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Button, Table, Modal, Form, Input, DatePicker, InputNumber, message } from 'antd';
 import { Subject, SubjectList } from '../models/subject';
@@ -28,7 +30,7 @@ const SubjectManager: React.FC = () => {
     const newSubject: Subject = {
       id: Date.now().toString(),
       name: subjectName,
-      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), 
+      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), // Lưu nhiều thời gian học
       duration: duration,
       contentLearned: contentLearned,
       notes: notes,
@@ -90,10 +92,16 @@ const SubjectManager: React.FC = () => {
       return;
     }
     if (value) {
-      setStudyTimes([...studyTimes, value]);
+      setStudyTimes(prev => [...prev, value]); // Thêm thời gian học vào mảng
     }
   };
 
+  const handleDeleteStudyTime = (index: number) => {
+    const updatedStudyTimes = studyTimes.filter((_, idx) => idx !== index); // Xóa thời gian học
+    setStudyTimes(updatedStudyTimes);
+  };
+
+  // Cấu hình cho Table của Ant Design
   const columns = [
     {
       title: 'Tên môn học',
@@ -104,10 +112,18 @@ const SubjectManager: React.FC = () => {
       title: 'Thời gian học',
       dataIndex: 'studyTime',
       key: 'studyTime',
-      render: (text: string[] | undefined) => 
-        Array.isArray(text) 
-          ? text.map(time => moment(time).format('YYYY-MM-DD HH:mm:ss')).join(', ') 
-          : 'Không có dữ liệu',
+      render: (text: string[], record: Subject) => (
+        <div>
+          {text.map((time, idx) => (
+            <div key={idx}>
+              <span>{moment(time).format('YYYY-MM-DD HH:mm:ss')}</span>
+              <Button onClick={() => handleDeleteStudyTime(idx)} type="link" danger style={{ marginLeft: '10px' }}>
+                Xóa
+              </Button>
+            </div>
+          ))}
+        </div>
+      ),
     },
     {
       title: 'Thời lượng học',
