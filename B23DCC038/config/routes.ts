@@ -1,4 +1,6 @@
-﻿export default [
+﻿import component from "@/locales/en-US/component";
+
+export default [
 	{
 		path: '/user',
 		layout: false,
@@ -42,6 +44,29 @@
 		component: './todolist/index',
 		icon: 'UnorderedListOutlined',
 	},
+	{
+		path: '/quan-ly',
+		name: 'Management',
+		icon: 'UnorderedListOutlined',
+		routes: [
+		  {
+			path: '/quan-ly/danh-muc',
+			name: 'Study Categories',
+			component: './Categories/index',
+		  },
+		  {
+			path: '/quan-ly/muc-tieu',
+			name: 'Study Target',
+			component: './Target/index',
+		  },
+		],
+	  },
+
+
+	
+
+
+
 	// DANH MUC HE THONG
 	// {
 	// 	name: 'DanhMuc',
