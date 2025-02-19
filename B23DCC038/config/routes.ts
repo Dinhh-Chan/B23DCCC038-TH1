@@ -1,4 +1,6 @@
-﻿export default [
+﻿import component from "@/locales/en-US/component";
+
+export default [
 	{
 		path: '/user',
 		layout: false,
@@ -43,12 +45,6 @@
 		icon: 'UnorderedListOutlined',
 	},
 	{
-		path: '/minigame',
-		name: 'Minigame',
-		component: './SoRandom/index',
-		icon: 'CalculatorOutlined',
-	},
-	{
 		path: '/quan-ly',
 		name: 'Management',
 		icon: 'UnorderedListOutlined',
@@ -65,6 +61,26 @@
 		  },
 		],
 	  },
+
+
+	
+
+
+
+	// DANH MUC HE THONG
+	// {
+	// 	name: 'DanhMuc',
+	// 	path: '/danh-muc',
+	// 	icon: 'copy',
+	// 	routes: [
+	// 		{
+	// 			name: 'ChucVu',
+	// 			path: 'chuc-vu',
+	// 			component: './DanhMuc/ChucVu',
+	// 		},
+	// 	],
+	// },
+
 	{
 		path: '/notification',
 		routes: [
