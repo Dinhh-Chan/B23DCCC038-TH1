@@ -42,6 +42,12 @@
 		component: './todolist/index',
 		icon: 'UnorderedListOutlined',
 	},
+	{
+		path: '/sorandom',
+		name: 'SoRandom',
+		component: './SoRandom/index',
+		icon: 'NumberOutlined',
+	},
 	// DANH MUC HE THONG
 	// {
 	// 	name: 'DanhMuc',
