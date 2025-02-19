@@ -1,10 +1,13 @@
+// src/components/SubjectManager.tsx
+
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form, Input, DatePicker, InputNumber, message } from 'antd';
+import { Button, Table, Modal, Form, Input, DatePicker, InputNumber, message, Select } from 'antd';
 import { Subject, SubjectList } from '../models/subject';
 import { addSubject, updateSubject, deleteSubject, getSubjects } from '../utils/localStorageUtils';
 import moment, { Moment } from 'moment';
 
 const { TextArea } = Input;
+const { Option } = Select;
 
 const SubjectManager: React.FC = () => {
   const [subjects, setSubjects] = useState<SubjectList>({});
@@ -15,10 +18,20 @@ const SubjectManager: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
+  const [newTime, setNewTime] = useState<Moment | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   useEffect(() => {
-    setSubjects(getSubjects());
-  }, []);
+    // Tải lại dữ liệu môn học mỗi khi component được mount hoặc khi subjects thay đổi
+    const subjectsFromStorage = getSubjects();
+    setSubjects(subjectsFromStorage);
+  }, []); // Chạy một lần khi component được mount
+
+  // Cập nhật lại trạng thái khi thêm hoặc sửa môn học
+  const reloadSubjects = () => {
+    const subjectsFromStorage = getSubjects();
+    setSubjects(subjectsFromStorage);
+  };
 
   const handleAddSubject = () => {
     if (!subjectName || !studyTimes.length || duration <= 0 || !contentLearned) {
@@ -28,13 +41,13 @@ const SubjectManager: React.FC = () => {
     const newSubject: Subject = {
       id: Date.now().toString(),
       name: subjectName,
-      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), 
+      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')),
       duration: duration,
       contentLearned: contentLearned,
       notes: notes,
     };
     addSubject(newSubject);
-    setSubjects(getSubjects());
+    reloadSubjects(); // Tải lại môn học sau khi thêm
     setIsModalVisible(false);
     resetForm();
   };
@@ -52,7 +65,7 @@ const SubjectManager: React.FC = () => {
 
   const handleDeleteSubject = (subjectId: string) => {
     deleteSubject(subjectId);
-    setSubjects(getSubjects());
+    reloadSubjects(); // Tải lại môn học sau khi xóa
   };
 
   const handleCloseModal = () => {
@@ -73,25 +86,49 @@ const SubjectManager: React.FC = () => {
     if (editingSubjectId) {
       const updatedSubject: Partial<Subject> = {
         name: subjectName,
-        studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), // Lưu nhiều thời gian học
+        studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')),
         duration: duration,
         contentLearned: contentLearned,
         notes: notes,
       };
       updateSubject(editingSubjectId, updatedSubject);
-      setSubjects(getSubjects());
+      reloadSubjects(); // Tải lại môn học sau khi sửa
       handleCloseModal();
     }
   };
 
-  const handleAddStudyTime = (value: Moment | null, dateString: string) => {
-    if (value && value.isBefore(moment())) {
-      message.error('Thời gian học không thể ở quá khứ');
+  // Chức năng thêm thời gian học
+  const handleAddStudyTime = () => {
+    if (!newTime || !selectedSubject) {
+      message.error('Vui lòng chọn thời gian học và môn học');
       return;
     }
-    if (value) {
-      setStudyTimes([...studyTimes, value]);
+
+    // Cập nhật mảng studyTimes cho môn học tương ứng
+    const updatedSubjects = { ...subjects };
+    const subjectToUpdate = updatedSubjects[selectedSubject];
+
+    if (subjectToUpdate) {
+      subjectToUpdate.studyTime = [
+        ...subjectToUpdate.studyTime,
+        newTime.format('YYYY-MM-DD HH:mm:ss'),
+      ];
+      updateSubject(subjectToUpdate.id, subjectToUpdate); // Cập nhật môn học trong localStorage
     }
+
+    // Tải lại danh sách môn học
+    reloadSubjects();
+    setNewTime(null); // Reset thời gian học
+    setSelectedSubject(null); // Reset môn học
+  };
+
+  // Chọn môn học để thêm lịch học
+  const handleSubjectChange = (value: string) => {
+    setSelectedSubject(value);
+  };
+
+  const handleTimeChange = (value: Moment | null) => {
+    setNewTime(value);
   };
 
   const columns = [
@@ -104,10 +141,15 @@ const SubjectManager: React.FC = () => {
       title: 'Thời gian học',
       dataIndex: 'studyTime',
       key: 'studyTime',
-      render: (text: string[] | undefined) => 
-        Array.isArray(text) 
-          ? text.map(time => moment(time).format('YYYY-MM-DD HH:mm:ss')).join(', ') 
-          : 'Không có dữ liệu',
+      render: (text: string[], record: Subject) => (
+        <div>
+          {text.map((time, idx) => (
+            <div key={idx}>
+              <span>{moment(time).format('YYYY-MM-DD HH:mm:ss')}</span>
+            </div>
+          ))}
+        </div>
+      ),
     },
     {
       title: 'Thời lượng học',
@@ -146,6 +188,14 @@ const SubjectManager: React.FC = () => {
         Thêm môn học
       </Button>
 
+      <Button
+        onClick={() => setIsModalVisible(true)}
+        type="primary"
+        style={{ marginBottom: '20px', marginLeft: '20px' }}
+      >
+        Thêm lịch học
+      </Button>
+
       <Modal
         title={editingSubjectId ? 'Sửa môn học' : 'Thêm môn học'}
         visible={isModalVisible}
@@ -164,38 +214,32 @@ const SubjectManager: React.FC = () => {
           <Form.Item label="Thời gian học">
             <DatePicker
               showTime
-              onChange={handleAddStudyTime}
+              value={newTime}
+              onChange={handleTimeChange}
               style={{ width: '100%' }}
               placeholder="Chọn thời gian học"
             />
           </Form.Item>
 
-          <Form.Item label="Thời lượng học (phút)">
-            <InputNumber
-              value={duration}
-              onChange={(value) => setDuration(value!)}
-              min={0}
+          <Form.Item label="Chọn môn học để thêm lịch học">
+            <Select
+              value={selectedSubject}
+              onChange={handleSubjectChange}
               style={{ width: '100%' }}
-              placeholder="Nhập thời lượng học (phút)"
-            />
+              placeholder="Chọn môn học"
+            >
+              {Object.values(subjects).map((subject) => (
+                <Option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
 
-          <Form.Item label="Nội dung đã học">
-            <TextArea
-              value={contentLearned}
-              onChange={(e) => setContentLearned(e.target.value)}
-              rows={4}
-              placeholder="Nhập nội dung đã học"
-            />
-          </Form.Item>
-
-          <Form.Item label="Ghi chú">
-            <TextArea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Nhập ghi chú"
-            />
+          <Form.Item>
+            <Button onClick={handleAddStudyTime} type="primary" style={{ width: '100%' }}>
+              Lưu lịch học
+            </Button>
           </Form.Item>
         </Form>
       </Modal>
