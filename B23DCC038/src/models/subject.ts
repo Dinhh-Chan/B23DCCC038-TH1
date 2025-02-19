@@ -1,8 +1,10 @@
 export interface Subject {
     id: string;
     name: string;
-    progress: number; // Tiến độ học tập (0 - 100%)
-    target: number; // Mục tiêu học tập (ví dụ: số bài học trong tháng)
+    studyTime: string; // Thời gian học (Ngày giờ)
+    duration: number;  // Thời lượng học (ví dụ: phút)
+    contentLearned: string; // Nội dung đã học
+    notes: string; // Ghi chú
   }
   
   export interface SubjectList {

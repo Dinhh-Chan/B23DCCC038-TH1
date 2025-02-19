@@ -1,23 +1,28 @@
 // src/App.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import SubjectManager from '../../components/SubjectManager';
-import ProgressTracker from '../../components/ProgressTracker';
-import { getSubjects } from '../../utils/localStorageUtils';
+import SubjectDetails from '../../components/SubjectDetails';
+import { Subject } from '../../models/subject';
 
 const App: React.FC = () => {
-  const subjects = getSubjects();
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+
+  const handleSelectSubject = (subject: Subject) => {
+    setSelectedSubject(subject);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedSubject(null);
+  };
 
   return (
     <div>
       <h1>Quản lý tiến độ học tập</h1>
       <SubjectManager />
-      <div>
-        <h2>Tiến độ học tập</h2>
-        {Object.values(subjects).map((subject) => (
-          <ProgressTracker key={subject.id} subject={subject} />
-        ))}
-      </div>
+      {selectedSubject && (
+        <SubjectDetails subject={selectedSubject} onClose={handleCloseDetails} />
+      )}
     </div>
   );
 };

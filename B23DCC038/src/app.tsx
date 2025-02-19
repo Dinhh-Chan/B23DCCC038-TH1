@@ -16,9 +16,6 @@ import NotFoundContent from './pages/exception/404';
 import type { IInitialState } from './services/base/typing';
 import './styles/global.less';
 import { currentRole } from './utils/ip';
-import SubjectManager from './components/SubjectManager';
-import ProgressTracker from './components/ProgressTracker';
-import { getSubjects } from './utils/localStorageUtils';
 /**  loading */
 export const initialStateConfig = {
 	loading: <></>,
