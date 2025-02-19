@@ -28,7 +28,7 @@ const SubjectManager: React.FC = () => {
     const newSubject: Subject = {
       id: Date.now().toString(),
       name: subjectName,
-      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), // Lưu nhiều thời gian học
+      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), 
       duration: duration,
       contentLearned: contentLearned,
       notes: notes,
@@ -104,7 +104,10 @@ const SubjectManager: React.FC = () => {
       title: 'Thời gian học',
       dataIndex: 'studyTime',
       key: 'studyTime',
-      render: (text: string[]) => text.map(time => moment(time).format('YYYY-MM-DD HH:mm:ss')).join(', '),
+      render: (text: string[] | undefined) => 
+        Array.isArray(text) 
+          ? text.map(time => moment(time).format('YYYY-MM-DD HH:mm:ss')).join(', ') 
+          : 'Không có dữ liệu',
     },
     {
       title: 'Thời lượng học',
