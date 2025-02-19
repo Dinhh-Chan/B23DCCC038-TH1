@@ -1,6 +1,4 @@
-﻿import component from "@/locales/en-US/component";
-
-export default [
+﻿export default [
 	{
 		path: '/user',
 		layout: false,
@@ -67,26 +65,6 @@ export default [
 		  },
 		],
 	  },
-
-
-	
-
-
-
-	// DANH MUC HE THONG
-	// {
-	// 	name: 'DanhMuc',
-	// 	path: '/danh-muc',
-	// 	icon: 'copy',
-	// 	routes: [
-	// 		{
-	// 			name: 'ChucVu',
-	// 			path: 'chuc-vu',
-	// 			component: './DanhMuc/ChucVu',
-	// 		},
-	// 	],
-	// },
-
 	{
 		path: '/notification',
 		routes: [
