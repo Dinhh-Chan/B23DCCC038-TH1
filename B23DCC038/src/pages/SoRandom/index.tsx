@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Input, Card, message, Typography, Row, Col, Progress, Divider } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
@@ -14,6 +14,8 @@ const GuessingGame: React.FC = () => {
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [guessHistory, setGuessHistory] = useState<Array<{guess: number, result: string}>>([]);
   const MAX_GUESSES = 10;
+
+  const historyContainerRef = useRef<HTMLDivElement>(null);
 
   const initializeGame = () => {
     const newRandomNumber = Math.floor(Math.random() * 100) + 1;
@@ -31,6 +33,12 @@ const GuessingGame: React.FC = () => {
     initializeGame();
   }, []);
 
+  useEffect(() => {
+    if (historyContainerRef.current && guessHistory.length > 0) {
+      historyContainerRef.current.scrollTop = historyContainerRef.current.scrollHeight;
+    }
+  }, [guessHistory]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === '' || /^[0-9]+$/.test(value)) {
@@ -45,7 +53,7 @@ const GuessingGame: React.FC = () => {
     }
 
     const guess = parseInt(userGuess);
-    
+
     if (guess < 1 || guess > 100) {
       message.error('Vui lòng nhập số từ 1 đến 100!');
       return;
@@ -62,7 +70,7 @@ const GuessingGame: React.FC = () => {
       result = 'Bạn đoán quá cao!';
       setFeedback(result);
     } else {
-      result = 'Chúc mừng! Bạn đã đoán đúng! Số cần tìm là: '+ randomNumber;
+      result = 'Chúc mừng! Bạn đã đoán đúng!';
       setFeedback(result);
       setGameWon(true);
       setGameOver(true);
@@ -153,7 +161,14 @@ const GuessingGame: React.FC = () => {
         {guessHistory.length > 0 && (
           <>
             <Divider>Lịch sử đoán</Divider>
-            <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            <div 
+              ref={historyContainerRef}
+              style={{ 
+                maxHeight: '200px', 
+                overflowY: 'auto',
+                scrollBehavior: 'smooth' // Thêm hiệu ứng cuộn mượt
+              }}
+            >
               {guessHistory.map((entry, index) => (
                 <div 
                   key={index} 

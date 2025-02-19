@@ -44,9 +44,9 @@
 	},
 	{
 		path: '/sorandom',
-		name: 'SoRandom',
+		name: 'Minigame',
 		component: './SoRandom/index',
-		icon: 'NumberOutlined',
+		icon: 'CalculatorOutlined',
 	},
 	// DANH MUC HE THONG
 	// {
