@@ -61,7 +61,7 @@
 		{
 		path: '/quan-ly/muc-tieu',
 		name: 'Mục tiêu học tập',
-		component: './Target/index',
+		component: './Target/target',
 		},
 		{
 		path: '/quan-ly/lich-hoc',

@@ -1,11 +1,10 @@
-// src/components/CalendarView.tsx
 import React, { useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { Subject } from '../models/subject';
 import moment from 'moment';
-import { Modal, Button, DatePicker, InputNumber, message, Form } from 'antd';
+import { Modal, Button, DatePicker, InputNumber, message, Form, Select } from 'antd';
 
 // Định nghĩa màu cố định cho mỗi môn học (hoặc ánh xạ theo tên môn học)
 const getSubjectColor = (subjectName: string) => {
@@ -17,25 +16,27 @@ const getSubjectColor = (subjectName: string) => {
     'Công nghệ': '#a1ff33',
   };
 
-  return colors[subjectName] || '#cccccc';
+  return colors[subjectName] || '#cccccc'; // Màu mặc định nếu không có trong bảng
 };
 
 interface CalendarViewProps {
   subjects: Subject[];
-  setSubjects: React.Dispatch<React.SetStateAction<Subject[]>>; // Chắc chắn rằng setSubjects là một hàm
+  setSubjects: React.Dispatch<React.SetStateAction<Subject[]>>; // Thêm để có thể cập nhật subjects từ component cha
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null); 
+  const [isModalVisible, setIsModalVisible] = useState(false); // Modal chỉnh sửa lịch học
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false); // Modal thêm lịch học
+  const [selectedEvent, setSelectedEvent] = useState<any>(null); // Để lưu sự kiện cần sửa
   const [newTime, setNewTime] = useState<moment.Moment | null>(null);
   const [newDuration, setNewDuration] = useState<number>(0);
+  const [selectedSubject, setSelectedSubject] = useState<string>(""); // Môn học cho lịch học mới
 
-  // Cập nhật sự kiện lịch học
+  // Tạo danh sách sự kiện với màu sắc cố định và tên môn học
   const events = subjects.flatMap(subject => {
     if (Array.isArray(subject.studyTime)) {
       return subject.studyTime.map((time: string, index: number) => ({
-        id: `${subject.id}-${index}`,
+        id: index.toString(),
         title: subject.name,
         date: moment(time).format('YYYY-MM-DD HH:mm:ss'),
         backgroundColor: getSubjectColor(subject.name),
@@ -48,6 +49,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
     }
   });
 
+  // Mở modal để sửa sự kiện
   const handleEventClick = (info: any) => {
     const event = info.event;
     const eventData = event.extendedProps;
@@ -58,6 +60,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
     setIsModalVisible(true);
   };
 
+  // Cập nhật lịch học sau khi sửa
   const handleSaveEdit = () => {
     if (!newTime || !newDuration || !selectedEvent) {
       message.error('Vui lòng điền đầy đủ thông tin');
@@ -72,11 +75,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
       subjectToUpdate.duration = newDuration;
     }
 
-    setSubjects(updatedSubjects); // Cập nhật lại subjects
+    setSubjects(updatedSubjects);
     setIsModalVisible(false);
     message.success('Lịch học đã được cập nhật');
   };
 
+  // Xóa lịch học
   const handleDeleteEvent = () => {
     const updatedSubjects = [...subjects];
     const subjectToUpdate = updatedSubjects.find(subject => subject.id === selectedEvent.subjectId);
@@ -85,13 +89,60 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
       subjectToUpdate.studyTime = subjectToUpdate.studyTime.filter((_, index) => index !== selectedEvent.id);
     }
 
-    setSubjects(updatedSubjects); // Cập nhật lại subjects
+    setSubjects(updatedSubjects);
     setIsModalVisible(false);
     message.success('Lịch học đã được xóa');
+    window.location.reload();
+  };
+
+  // Thêm lịch học mới
+  const handleAddEvent = () => {
+    if (!newTime || !newDuration || !selectedSubject) {
+      message.error('Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
+    // Tạo sự kiện mới
+    const newEvent = {
+      id: new Date().toString(),
+      title: selectedSubject,
+      date: newTime.format('YYYY-MM-DD HH:mm:ss'),
+      backgroundColor: getSubjectColor(selectedSubject),
+      borderColor: getSubjectColor(selectedSubject),
+      subjectId: selectedSubject,
+      duration: newDuration,
+    };
+
+    const updatedSubjects = [...subjects];
+    const subjectToUpdate = updatedSubjects.find(subject => subject.name === selectedSubject);
+
+    if (subjectToUpdate) {
+      subjectToUpdate.studyTime.push(newTime.format('YYYY-MM-DD HH:mm:ss'));
+    } else {
+      updatedSubjects.push({
+        id: selectedSubject,
+        name: selectedSubject,
+        studyTime: [newTime.format('YYYY-MM-DD HH:mm:ss')],
+        duration: newDuration,
+        contentLearned: '',
+        notes: '',
+      });
+    }
+
+    setSubjects(updatedSubjects);
+    setIsAddModalVisible(false);
+    message.success('Lịch học mới đã được thêm');
   };
 
   return (
     <div>
+      <Button 
+        type="primary" 
+        onClick={() => setIsAddModalVisible(true)} 
+        style={{ marginBottom: '20px' }}
+      >
+        Thêm lịch học
+      </Button>
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin]}
         initialView="dayGridMonth"
@@ -110,6 +161,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
         eventClick={handleEventClick}
       />
 
+      {/* Button thêm lịch học */}
+      
+
+      {/* Modal sửa lịch học */}
       <Modal
         title="Sửa lịch học"
         visible={isModalVisible}
@@ -130,7 +185,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
           <Form.Item label="Thời lượng học (phút)">
             <InputNumber
               value={newDuration}
-              onChange={(value) => setNewDuration(value || 0)}
+              onChange={(value: number | null) => setNewDuration(value ?? 0)} // Xử lý nếu giá trị là null
               min={0}
               style={{ width: '100%' }}
               placeholder="Nhập thời lượng học"
@@ -141,6 +196,51 @@ const CalendarView: React.FC<CalendarViewProps> = ({ subjects, setSubjects }) =>
         <Button danger onClick={handleDeleteEvent} style={{ marginTop: 10 }}>
           Xóa lịch học
         </Button>
+      </Modal>
+
+      {/* Modal thêm lịch học */}
+      <Modal
+        title="Thêm lịch học"
+        visible={isAddModalVisible}
+        onCancel={() => setIsAddModalVisible(false)}
+        onOk={handleAddEvent}
+      >
+        <Form layout="vertical">
+          <Form.Item label="Chọn môn học">
+            <Select
+              value={selectedSubject}
+              onChange={setSelectedSubject}
+              style={{ width: '100%' }}
+              placeholder="Chọn môn học"
+            >
+              {subjects.map(subject => (
+                <Select.Option key={subject.id} value={subject.name}>
+                  {subject.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item label="Thời gian học">
+            <DatePicker
+              showTime
+              value={newTime}
+              onChange={setNewTime}
+              style={{ width: '100%' }}
+              placeholder="Chọn thời gian học"
+            />
+          </Form.Item>
+
+          <Form.Item label="Thời lượng học (phút)">
+            <InputNumber
+              value={newDuration}
+              onChange={(value: number | null) => setNewDuration(value ?? 0)} // Xử lý nếu giá trị là null
+              min={0}
+              style={{ width: '100%' }}
+              placeholder="Nhập thời lượng học"
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
