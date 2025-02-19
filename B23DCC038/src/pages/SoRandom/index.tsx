@@ -105,8 +105,9 @@ const GuessingGame: React.FC = () => {
         style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
       >
         <Row gutter={[16, 16]} justify="center">
-          <Col span={24}>
+          <Col span={24} style={{ display: "flex", justifyContent: "center" }}>
             <Progress 
+              style={{ width: "80%" }}
               percent={guessCount * 10} 
               status={gameWon ? "success" : guessCount >= MAX_GUESSES ? "exception" : "active"}
               format={() => `${guessCount}/${MAX_GUESSES} lượt`}
