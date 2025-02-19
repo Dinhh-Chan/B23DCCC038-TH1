@@ -63,6 +63,11 @@
 			name: 'Study Target',
 			component: './Target/index',
 		  },
+		  {
+			path: '/quan-ly/lich',
+			name: 'Canlender',
+			component: './Canlender/index',
+		  }
 		],
 	  },
 	{

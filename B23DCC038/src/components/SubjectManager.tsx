@@ -1,17 +1,15 @@
-// src/components/SubjectManager.tsx
-
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Form, Input, DatePicker, InputNumber } from 'antd';
+import { Button, Table, Modal, Form, Input, DatePicker, InputNumber, message } from 'antd';
 import { Subject, SubjectList } from '../models/subject';
 import { addSubject, updateSubject, deleteSubject, getSubjects } from '../utils/localStorageUtils';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 
 const { TextArea } = Input;
 
 const SubjectManager: React.FC = () => {
   const [subjects, setSubjects] = useState<SubjectList>({});
   const [subjectName, setSubjectName] = useState('');
-  const [studyTime, setStudyTime] = useState<moment.Moment | null>(null);
+  const [studyTimes, setStudyTimes] = useState<Moment[]>([]); // Lưu nhiều thời gian học
   const [duration, setDuration] = useState<number>(0);
   const [contentLearned, setContentLearned] = useState('');
   const [notes, setNotes] = useState('');
@@ -23,10 +21,14 @@ const SubjectManager: React.FC = () => {
   }, []);
 
   const handleAddSubject = () => {
+    if (!subjectName || !studyTimes.length || duration <= 0 || !contentLearned) {
+      message.error('Vui lòng điền đầy đủ thông tin');
+      return;
+    }
     const newSubject: Subject = {
       id: Date.now().toString(),
       name: subjectName,
-      studyTime: studyTime ? studyTime.format('YYYY-MM-DD HH:mm:ss') : '',
+      studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), 
       duration: duration,
       contentLearned: contentLearned,
       notes: notes,
@@ -40,7 +42,7 @@ const SubjectManager: React.FC = () => {
   const handleEditSubject = (subjectId: string) => {
     const subject = subjects[subjectId];
     setSubjectName(subject.name);
-    setStudyTime(moment(subject.studyTime, 'YYYY-MM-DD HH:mm:ss'));
+    setStudyTimes(subject.studyTime.map((time: string) => moment(time, 'YYYY-MM-DD HH:mm:ss')));
     setDuration(subject.duration);
     setContentLearned(subject.contentLearned);
     setNotes(subject.notes);
@@ -61,7 +63,7 @@ const SubjectManager: React.FC = () => {
 
   const resetForm = () => {
     setSubjectName('');
-    setStudyTime(null);
+    setStudyTimes([]);
     setDuration(0);
     setContentLearned('');
     setNotes('');
@@ -71,7 +73,7 @@ const SubjectManager: React.FC = () => {
     if (editingSubjectId) {
       const updatedSubject: Partial<Subject> = {
         name: subjectName,
-        studyTime: studyTime ? studyTime.format('YYYY-MM-DD HH:mm:ss') : '',
+        studyTime: studyTimes.map(time => time.format('YYYY-MM-DD HH:mm:ss')), // Lưu nhiều thời gian học
         duration: duration,
         contentLearned: contentLearned,
         notes: notes,
@@ -82,7 +84,16 @@ const SubjectManager: React.FC = () => {
     }
   };
 
-  // Cấu hình cho Table của Ant Design
+  const handleAddStudyTime = (value: Moment | null, dateString: string) => {
+    if (value && value.isBefore(moment())) {
+      message.error('Thời gian học không thể ở quá khứ');
+      return;
+    }
+    if (value) {
+      setStudyTimes([...studyTimes, value]);
+    }
+  };
+
   const columns = [
     {
       title: 'Tên môn học',
@@ -93,7 +104,10 @@ const SubjectManager: React.FC = () => {
       title: 'Thời gian học',
       dataIndex: 'studyTime',
       key: 'studyTime',
-      render: (text: string) => moment(text).format('YYYY-MM-DD HH:mm:ss'),
+      render: (text: string[] | undefined) => 
+        Array.isArray(text) 
+          ? text.map(time => moment(time).format('YYYY-MM-DD HH:mm:ss')).join(', ') 
+          : 'Không có dữ liệu',
     },
     {
       title: 'Thời lượng học',
@@ -150,8 +164,7 @@ const SubjectManager: React.FC = () => {
           <Form.Item label="Thời gian học">
             <DatePicker
               showTime
-              value={studyTime}
-              onChange={(date) => setStudyTime(date)}
+              onChange={handleAddStudyTime}
               style={{ width: '100%' }}
               placeholder="Chọn thời gian học"
             />
