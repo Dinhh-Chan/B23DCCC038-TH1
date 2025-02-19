@@ -1,0 +1,50 @@
+/* TodoList.css */
+
+/* Container styling */
+.todo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Header styling */
+  .todo-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .todo-header h1 {
+    font-size: 2.5rem;
+    color: #333;
+  }
+  
+  /* Create task button styling */
+  .create-btn {
+    margin-top: 10px;
+  }
+  
+  /* Card (task) styling */
+  .task-card {
+    transition: box-shadow 0.3s ease;
+    border-radius: 4px;
+  }
+  
+  .task-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Card header styling */
+  .task-card .ant-card-head {
+    background-color: #f0f2f5;
+    font-weight: bold;
+  }
+  
+  /* Modal Form styling */
+  .modal-form .ant-form-item {
+    margin-bottom: 16px;
+  }
+  
+  .modal-form .ant-form-item-label > label {
+    font-weight: 600;
+  }
+  
