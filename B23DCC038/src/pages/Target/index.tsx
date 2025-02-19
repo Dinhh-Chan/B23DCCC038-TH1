@@ -1,123 +1,150 @@
-import type { IColumn } from '@/components/Table/typing';
-import { Button, Form, Input, Modal, Table } from 'antd';
-import { useEffect, useState } from 'react';
-import { useModel } from 'umi';
+import React, { useState, useEffect } from "react";
+import { Card, InputNumber, Button, Select, Progress, message } from "antd";
+import { Option } from "antd/es/mentions";
 
-const Target = () => {
-	const { data, getDataUser } = useModel('randomuser');
-	const [visible, setVisible] = useState<boolean>(false);
-	const [isEdit, setIsEdit] = useState<boolean>(false);
-	const [row, setRow] = useState<RandomUser.Record>();
-	useEffect(() => {
-		getDataUser();
-	}, []);
+interface Subject {
+  name: string;
+  target: number;
+  completed: number;
+}
 
-	const columns: IColumn<RandomUser.Record>[] = [
-		{
-			title: 'Address',
-			dataIndex: 'address',
-			key: 'name',
-			width: 200,
-		},
-		{
-			title: 'Balance',
-			dataIndex: 'balance',
-			key: 'age',
-			width: 100,
-		},
-		{
-			title: 'Sửa/xóa',
-			width: 200,
-			align: 'center',
-			render: (record) => {
-				return (
-					<div>
-						<Button
-							onClick={() => {
-								setVisible(true);
-								setRow(record);
-								setIsEdit(true);
-							}}
-						>
-							Sửa
-						</Button>
-						<Button
-							style={{ marginLeft: 10 }}
-							onClick={() => {
-								const dataLocal: any = JSON.parse(localStorage.getItem('data') as any);
-								const newData = dataLocal.filter((item: any) => item.address !== record.address);
-								localStorage.setItem('data', JSON.stringify(newData));
-								getDataUser();
-							}}
-							type='primary'
-						>
-							Xóa
-						</Button>
-					</div>
-				);
-			},
-		},
-	];
+const Target: React.FC = () => {
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // "YYYY-MM"
+  const [selectedSubject, setSelectedSubject] = useState<string>(""); 
+  const [subjects, setSubjects] = useState<Subject[]>([]); 
+  const [targetMinutes, setTargetMinutes] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
 
-	return (
-		<div>
-			<Button
-				type='primary'
-				onClick={() => {
-					setVisible(true);
-					setIsEdit(false);
-				}}
-			>
-				Add User
-			</Button>
-			<Table dataSource={data} columns={columns} />
-			<Modal
-				destroyOnClose
-				footer={false}
-				title={isEdit ? 'Edit User' : 'Add User'}
-				visible={visible}
-				onOk={() => {}}
-				onCancel={() => {
-					setVisible(false);
-				}}
-			>
-				<Form
-					onFinish={(values) => {
-						const index = data.findIndex((item: any) => item.address === row?.address);
-						const dataTemp: RandomUser.Record[] = [...data];
-						dataTemp.splice(index, 1, values);
-						const dataLocal = isEdit ? dataTemp : [values, ...data];
-						localStorage.setItem('data', JSON.stringify(dataLocal));
-						setVisible(false);
-						getDataUser();
-					}}
-				>
-					<Form.Item
-						initialValue={row?.address}
-						label='address'
-						name='address'
-						rules={[{ required: true, message: 'Please input your address!' }]}
-					>
-						<Input />
-					</Form.Item>
-					<Form.Item
-						initialValue={row?.balance}
-						label='balance'
-						name='balance'
-						rules={[{ required: true, message: 'Please input your balance!' }]}
-					>
-						<Input />
-					</Form.Item>
-					<div className='form-footer'>
-						<Button htmlType='submit' type='primary'>
-							{isEdit ? 'Chỉnh sửa' : 'Thêm mới'}
-						</Button>
-						<Button onClick={() => setVisible(false)}>Hủy</Button>
-					</div>
-				</Form>
-			</Modal>
-		</div>
-	);
+  // Load danh sách môn học từ localStorage khi component mount
+  useEffect(() => {
+    const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
+    setSubjects(storedSubjects);
+  }, []);
+
+  // Chọn môn học và tải mục tiêu học tập
+  useEffect(() => {
+    if (selectedSubject) {
+      const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
+      const subject = storedSubjects.find((sub: Subject) => sub.name === selectedSubject);
+      if (subject) {
+        setTargetMinutes(subject.target);
+        setProgress(subject.completed);
+      }
+    }
+  }, [selectedSubject]);
+
+  // Lưu mục tiêu học tập vào localStorage
+  const handleSetGoal = () => {
+    if (targetMinutes <= 0) {
+      message.warning("Mục tiêu phải lớn hơn 0 phút!");
+      return;
+    }
+
+    const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
+    const updatedSubjects = storedSubjects.map((subject: Subject) => {
+      if (subject.name === selectedSubject) {
+        return { ...subject, target: targetMinutes };
+      }
+      return subject;
+    });
+    localStorage.setItem("subjects", JSON.stringify(updatedSubjects));
+    message.success(`Đã đặt mục tiêu ${targetMinutes} phút cho môn học ${selectedSubject}`);
+  };
+
+  // Cập nhật tiến độ học tập
+  const handleUpdateProgress = (minutes: number) => {
+    if (minutes <= 0) {
+      message.warning("Số phút học phải lớn hơn 0!");
+      return;
+    }
+
+    const storedSubjects = JSON.parse(localStorage.getItem("subjects") || "[]");
+    const updatedSubjects = storedSubjects.map((subject: Subject) => {
+      if (subject.name === selectedSubject) {
+        const newCompleted = subject.completed + minutes;
+        return { ...subject, completed: newCompleted };
+      }
+      return subject;
+    });
+
+    localStorage.setItem("subjects", JSON.stringify(updatedSubjects));
+    setProgress(progress + minutes);
+    message.success(`Đã cộng thêm ${minutes} phút vào tiến độ học tập cho môn ${selectedSubject}!`);
+  };
+
+  // Chọn tháng và lưu lại
+  const handleChangeMonth = (month: string) => {
+    setSelectedMonth(month);
+  };
+
+  return (
+    <div>
+      <Card title="🎯 Quản lý Mục tiêu Học tập">
+        <div style={{ marginBottom: 16 }}>
+          <p><strong>Chọn tháng:</strong></p>
+          <Select
+            defaultValue={selectedMonth}
+            onChange={handleChangeMonth}
+            style={{ width: "100%" }}
+          >
+            <Option value="2025-01">Tháng 1, 2025</Option>
+            <Option value="2025-02">Tháng 2, 2025</Option>
+            {/* Add more months */}
+          </Select>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+            <p><strong>Chọn môn học:</strong></p>
+            <Select
+                value={selectedSubject}
+                onChange={setSelectedSubject}
+                style={{ width: "100%" }}
+                >
+                {subjects.map((subject) => (
+                    <Select.Option key={subject.name} value={subject.name}>
+                    {subject.name}
+                    </Select.Option>
+                ))}
+            </Select>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <p><strong>Nhập mục tiêu học tập (phút):</strong></p>
+          <InputNumber
+            min={1}
+            value={targetMinutes}
+            onChange={(value) => setTargetMinutes(value || 0)}
+            style={{ width: "100%" }}
+          />
+          <Button
+            type="primary"
+            onClick={handleSetGoal}
+            style={{ marginTop: 8, width: "100%" }}
+          >
+            Lưu mục tiêu
+          </Button>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <p><strong>Nhập số phút đã học:</strong></p>
+          <InputNumber
+            min={1}
+            onChange={(value) => handleUpdateProgress(value || 0)}
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <p><strong>Tiến độ học tập:</strong></p>
+        <Progress percent={(progress / targetMinutes) * 100} status={progress >= targetMinutes ? "success" : "active"} />
+
+        {progress >= targetMinutes ? (
+          <p style={{ color: "green", fontWeight: "bold" }}>🎉 Chúc mừng! Bạn đã hoàn thành mục tiêu!</p>
+        ) : (
+          <p>📊 Bạn đã học {progress}/{targetMinutes} phút.</p>
+        )}
+      </Card>
+    </div>
+  );
 };
 
 export default Target;
