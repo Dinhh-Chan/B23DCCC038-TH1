@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Input, Button, Checkbox, Form, message } from 'antd';
 
 export interface GoalData {
@@ -7,56 +7,50 @@ export interface GoalData {
   completed: boolean;
 }
 
-interface SimpleGoalProps {
-  goalData: GoalData | null;
+interface AddGoalProps {
   onSaveGoal: (data: GoalData) => void;
 }
 
-const SimpleGoal: React.FC<SimpleGoalProps> = ({ goalData, onSaveGoal }) => {
+const AddGoal: React.FC<AddGoalProps> = ({ onSaveGoal }) => {
   const [goal, setGoal] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [completed, setCompleted] = useState<boolean>(false);
-
-  // Nếu có dữ liệu từ localStorage, khởi tạo state với dữ liệu đó
-  useEffect(() => {
-    if (goalData) {
-      setGoal(goalData.goal);
-      setDescription(goalData.description);
-      setCompleted(goalData.completed);
-    }
-  }, [goalData]);
 
   const handleSubmit = () => {
     if (!goal || !description) {
       message.warning('Vui lòng nhập đầy đủ mục tiêu và mô tả.');
       return;
     }
-    const newGoalData: GoalData = { goal, description, completed };
-    onSaveGoal(newGoalData);
+    const newGoal: GoalData = { goal, description, completed };
+    onSaveGoal(newGoal);
     message.success('Mục tiêu đã được lưu.');
+    // Reset form sau khi lưu
+    setGoal('');
+    setDescription('');
+    setCompleted(false);
   };
 
   return (
-    <Card title="Thiết lập Mục tiêu">
+    <Card title="Thêm Mục tiêu">
       <Form layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="Mục tiêu" required>
-          <Input
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            placeholder="Nhập mục tiêu"
+          <Input 
+            value={goal} 
+            onChange={(e) => setGoal(e.target.value)} 
+            placeholder="Nhập mục tiêu" 
           />
         </Form.Item>
         <Form.Item label="Mô tả" required>
-          <Input.TextArea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Nhập mô tả"
-            rows={4}
+          <Input.TextArea 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+            placeholder="Nhập mô tả" 
+            rows={4} 
           />
         </Form.Item>
         <Form.Item label="Trạng thái">
-          <Checkbox
-            checked={completed}
+          <Checkbox 
+            checked={completed} 
             onChange={(e) => setCompleted(e.target.checked)}
           >
             {completed ? 'Hoàn thành' : 'Chưa hoàn thành'}
@@ -72,4 +66,4 @@ const SimpleGoal: React.FC<SimpleGoalProps> = ({ goalData, onSaveGoal }) => {
   );
 };
 
-export default SimpleGoal;
+export default AddGoal;
